@@ -15,7 +15,7 @@
     "scripts": {
         "prepare": "npm run build",
         "build": "npm run clean && tsc && ts-node ts/scripts/update-typings.ts",
-        "clean": "rm -rf index.js index.d.ts lib benchmark",
+        "clean": "rm -rf index.js index.d.ts",
         "test": "npm run lint && nyc mocha --require ts-node/register ts/test/*.test.ts --reporter spec --colors",
         "test-package": "npm pack && cd test-package && npm i && npm test",
         "bench": "node benchmark/index.js",
@@ -29,9 +29,7 @@
     },
     "files": [
         "index.js",
-        "index.d.ts",
-        "lib/*.d.ts",
-        "lib/*.js"
+        "index.d.ts"
     ],
     "dependencies": {},
     "devDependencies": {
@@ -55,9 +53,6 @@
     },
     "license": "MIT",
     "nyc": {
-        "include": [
-            "ts/lib/**/*.ts"
-        ],
         "extension": [
             ".ts"
         ]
