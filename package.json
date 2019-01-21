@@ -1,6 +1,6 @@
 {
     "name": "composite-map",
-    "version": "1.0.0",
+    "version": "0.0.0",
     "description": "A module for mapping between multi-part keys and values.",
     "keywords": [
         "composite",
