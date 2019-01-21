@@ -1,0 +1,65 @@
+{
+    "name": "composite-map",
+    "version": "1.0.0",
+    "description": "A module for mapping between multi-part keys and values.",
+    "keywords": [
+        "composite",
+        "map",
+        "tree",
+        "key",
+        "composite-key",
+        "typescript"
+    ],
+    "author": "Wes van Vugt <wes.vanvugt@gmail.com>",
+    "repository": "WesVanVugt/composite-map",
+    "scripts": {
+        "prepare": "npm run build",
+        "build": "npm run clean && tsc && ts-node ts/scripts/update-typings.ts",
+        "clean": "rm -rf index.js index.d.ts lib benchmark",
+        "test": "npm run lint && nyc mocha --require ts-node/register ts/test/*.test.ts --reporter spec --colors",
+        "test-package": "npm pack && cd test-package && npm i && npm test",
+        "bench": "node benchmark/index.js",
+        "release": "np",
+        "lint": "tslint ts/**/*.ts"
+    },
+    "main": "index.js",
+    "typings": "index.d.ts",
+    "engines": {
+        "node": ">=4"
+    },
+    "files": [
+        "index.js",
+        "index.d.ts",
+        "lib/*.d.ts",
+        "lib/*.js"
+    ],
+    "dependencies": {},
+    "devDependencies": {
+        "@types/benchmark": "^1.0.31",
+        "@types/chai": "4.1.7",
+        "@types/clone": "^0.1.30",
+        "@types/mocha": "^5.2.5",
+        "@types/node": "^10.12.9",
+        "beautify-benchmark": "^0.2.4",
+        "benchmark": "^2.1.4",
+        "chai": "^4.2.0",
+        "clone": "^2.1.2",
+        "microtime": "^2.1.8",
+        "mocha": "^5.2.0",
+        "np": "^3.1.0",
+        "nyc": "^13.1.0",
+        "ts-loader": "^5.3.3",
+        "ts-node": "^7.0.1",
+        "tslint": "^5.12.0",
+        "typescript": "^3.2.2"
+    },
+    "license": "MIT",
+    "nyc": {
+        "include": [
+            "ts/lib/**/*.ts"
+        ],
+        "extension": [
+            ".ts"
+        ]
+    }
+}
