@@ -2,12 +2,11 @@ export interface RecursiveMap<K, V> extends Map<K, RecursiveMap<K, V> | V> {}
 
 export interface RecursiveEntries<K, V> extends Array<[K, RecursiveEntries<K, V> | V]> {}
 
-export type CompositeMapCopyMethod = "reference" | "on-write" | "keys";
+export type CompositeMapCopyMethod = "on-write" | "keys";
 
 export interface CompositeMapOptions {
     /**
      * Indicates when CompositeMap key data passed to the constructor is copied.
-     * * "reference": Never copy key data, referencing the original data instead. The most performant option.
      * * "on-write": Copy the data as necessary when changes are made. Incurs a performance pentalty, but preserves
      * the original data.
      * * "keys": Copy the key data. More performant than "on-write" when there are few entries, but less performant
@@ -25,7 +24,7 @@ export interface CompositeMapOptions {
 export class CompositeMap<K, V> {
     private data: RecursiveMap<K, V>;
     private keyLength: number;
-    private copiedSet?: Set<RecursiveMap<K, V>>;
+    private copiedSet?: WeakSet<RecursiveMap<K, V>>;
 
     constructor();
     constructor(entries: CompositeMap<K, V>, options?: CompositeMapOptions);
@@ -45,13 +44,7 @@ export class CompositeMap<K, V> {
                     break;
                 case "on-write":
                     // When using copy-on-write, map being copied must also use copy-on-write mode
-                    if (entries.copiedSet) {
-                        entries.copiedSet.clear();
-                    } else {
-                        entries.copiedSet = new Set();
-                    }
-                    this.copiedSet = new Set();
-                case "reference":
+                    this.copiedSet = entries.copiedSet = new WeakSet();
                     this.keyLength = entries.keyLength;
                     this.data = entries.data;
                     break;
@@ -107,16 +100,23 @@ export class CompositeMap<K, V> {
     }
 
     public clear(): void {
-        this.data.clear();
+        if (this.copiedSet && !this.copiedSet.has(this.data)) {
+            this.copiedSet = undefined;
+            this.data = new Map();
+        } else {
+            this.data.clear();
+        }
         this.keyLength = 0;
     }
 
     public delete(key: K[]): boolean {
         if (!this.keyLength) {
+            this.copiedSet = undefined;
             return false;
         }
         if (!key.length) {
             if (!this.data.size) {
+                this.copiedSet = undefined;
                 return false;
             }
             this.clear();
@@ -146,9 +146,6 @@ export class CompositeMap<K, V> {
                 // Every map has been checked that the corresponding key is present, so if there is only one
                 // element, it must belong to the key we are removing.
                 break;
-            }
-            if (this.copiedSet) {
-                this.copiedSet.delete(map2);
             }
         }
         return this.copySection(maps, key, deletePoint).delete(key[deletePoint]);

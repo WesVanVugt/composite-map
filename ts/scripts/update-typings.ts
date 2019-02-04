@@ -1,11 +1,12 @@
-// tslint:disable:no-console
 import * as assert from "assert";
 import * as fs from "fs";
 import * as path from "path";
 
-function getRecursiveMapInterfaces(count: number, keys: string[]): string {
+const FILENAME = path.resolve(__dirname, "../../index.d.ts");
+
+function getRecursiveMapInterfaces(keys: string[]): string {
     return (
-        Array.from(new Array(count))
+        keys
             .map((_, i) => {
                 if (!i) {
                     return "export interface RecursiveMap1<K1, V> extends Map<K1, V> {}";
@@ -18,7 +19,7 @@ function getRecursiveMapInterfaces(count: number, keys: string[]): string {
             })
             .join("\n") +
         "\n" +
-        Array.from(new Array(count))
+        keys
             .map((_, i) => {
                 if (!i) {
                     return "export interface RecursiveEntries1<K1, V> extends Array<[K1, V]> {}";
@@ -33,31 +34,24 @@ function getRecursiveMapInterfaces(count: number, keys: string[]): string {
     );
 }
 
-function getCompositeMapDefinition(
-    index: number,
-    keys: string[],
-    className: string,
-    recursiveType: string,
-    jsonType: string,
-    keyQualifier: string,
-): string {
+function getCompositeMapDefinition(index: number, keys: string[]): string {
     const joinedKeys = keys.join(", ");
     const keySubsets = Array.from(new Array(keys.length + 1)).map(
         (_, i) => `[${keys.slice(0, keys.length - i).join(", ")}]`,
     );
-    const qualifiedKeys: string = keys.map((key) => `${key}${keyQualifier}`).join(", ");
+    const qualifiedKeys: string = keys.join(", ");
     return (
-        `export declare class ${className}${index + 1}<${qualifiedKeys}, V> {\n` +
+        `export declare class CompositeMap${index + 1}<${qualifiedKeys}, V> {\n` +
         [
             `constructor();`,
             `constructor(` +
-                `entries: ${className}${index + 1}<${joinedKeys}, V> | ` +
-                `${className}<${keys.join(" | ")}, V>, ` +
-                `options?: ${className}Options` +
+                `entries: CompositeMap${index + 1}<${joinedKeys}, V> | ` +
+                `CompositeMap<${keys.join(" | ")}, V>, ` +
+                `options?: CompositeMapOptions` +
                 `);`,
             `constructor(` +
-                `entries: ${jsonType}${index + 1}<${joinedKeys}, V> | ${jsonType}<${keys.join(" | ")}, V>, ` +
-                `options: ${className}Options & { keyLength: ${index + 1} }` +
+                `entries: RecursiveEntries${index + 1}<${joinedKeys}, V> | RecursiveEntries<${keys.join(" | ")}, V>, ` +
+                `options: CompositeMapOptions & { keyLength: ${index + 1} }` +
                 `);`,
             `set(key: [${joinedKeys}], value: V): this;`,
             `clear(): void;`,
@@ -68,14 +62,14 @@ function getCompositeMapDefinition(
                 .slice(1)
                 .map(
                     (key, i) =>
-                        `get(key: ${key}): ${recursiveType}${i + 1}<${keys.slice(-1 - i).join(", ")}, V> | undefined;`,
+                        `get(key: ${key}): RecursiveMap${i + 1}<${keys.slice(-1 - i).join(", ")}, V> | undefined;`,
                 ),
             `forEach(callbackfn: (value: V, key: ${keySubsets[0]}) => void): void;`,
             `keys(): IterableIterator<${keySubsets[0]}>;`,
             `values(): IterableIterator<V>;`,
             `entries(): IterableIterator<[${keySubsets[0]}, V]>;`,
             `[Symbol.iterator](): IterableIterator<[${keySubsets[0]}, V]>;`,
-            `toJSON(): ${jsonType}${index + 1}<${joinedKeys}, V>;`,
+            `toJSON(): RecursiveEntries${index + 1}<${joinedKeys}, V>;`,
         ]
             .map((v) => `    ${v}\n`)
             .join("") +
@@ -83,42 +77,13 @@ function getCompositeMapDefinition(
     );
 }
 
-function getCompositeMapDefinitions(
-    keys: string[],
-    className: string,
-    recursiveType: string,
-    jsonType: string,
-    keyQualifier: string,
-): string {
-    return keys
-        .map((_, i) =>
-            getCompositeMapDefinition(i, keys.slice(0, i + 1), className, recursiveType, jsonType, keyQualifier),
-        )
-        .join("\n");
+function getCompositeMapDefinitions(keys: string[]): string {
+    return keys.map((_, i) => getCompositeMapDefinition(i, keys.slice(0, i + 1))).join("\n");
 }
 
-function getPath(filename: string): string {
-    return path.resolve(__dirname, "../..", filename);
-}
-
-function readLibFile(filename: string): string {
-    return fs.readFileSync(getPath(filename)).toString();
-}
-
-function writeLibFile(filename: string, content: string): void {
-    fs.writeFileSync(getPath(filename), content, "utf8");
-}
-
-function updateFile(
-    filename: string,
-    className: string,
-    recursiveType: string,
-    jsonType: string,
-    keyQualifier: string,
-    getRecursiveTypes: (count: number, keys: string[]) => string,
-): void {
-    let content = readLibFile(filename);
-    const regExp = new RegExp(`^export declare const ${className}(\\d+): typeof ${className};$`, "gm");
+function main(): void {
+    let content = fs.readFileSync(FILENAME).toString();
+    const regExp = new RegExp(`^export declare const CompositeMap(\\d+): typeof CompositeMap;$`, "gm");
     let firstIndex: number = -1;
     let lastIndex: number = -1;
     let count = 0;
@@ -140,17 +105,17 @@ function updateFile(
 
     content =
         content.slice(0, firstIndex) +
-        getRecursiveTypes(count, keys) +
+        getRecursiveMapInterfaces(keys) +
         "\n" +
-        getCompositeMapDefinitions(keys, className, recursiveType, jsonType, keyQualifier) +
+        getCompositeMapDefinitions(keys) +
         content.slice(lastIndex + 1);
     content = content.replace(
-        `constructor(entries: ${className}<K, V>,`,
-        `constructor(entries: ${className}<K, V> | ${keys
-            .map((_, i) => `${className}${i + 1}<${(keyQualifier ? "any, " : "K, ").repeat(i + 1)}V>`)
+        `constructor(entries: CompositeMap<K, V>,`,
+        `constructor(entries: CompositeMap<K, V> | ${keys
+            .map((_, i) => `CompositeMap${i + 1}<${"K, ".repeat(i + 1)}V>`)
             .join(" | ")},`,
     );
-    writeLibFile(filename, content);
+    fs.writeFileSync(FILENAME, content, "utf8");
 }
 
-updateFile("index.d.ts", "CompositeMap", "RecursiveMap", "RecursiveEntries", "", getRecursiveMapInterfaces);
+main();

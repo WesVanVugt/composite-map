@@ -1,6 +1,6 @@
 # composite-map
 
-A module for mapping between multi-part keys and values.
+A module for mapping between multi-part keys and values
 
 ## Install
 
@@ -27,7 +27,7 @@ map.get(["one", 2, true]);
 Type: `CompositeMap` `Array`
 
 Elements to populate the map with. `Array` inputs must be in the same form as those created by the
-[CompositeMap.prototype.toJSON\(\)](#CompositeMap.prototype.toJSON) method.
+[CompositeMap.prototype.toJSON\(\)](#compositemapprototypetojson) method.
 
 ```js
 const map1 = new CompositeMap();
@@ -43,14 +43,10 @@ Type: `Object`
 
 ##### copy
 
-Type: `"reference"` `"on-write"` `"keys"`
+Type: `"on-write"` `"keys"`<br>
 Default: `"keys"`
 
 Determines when the keys for the provided `CompositeMap` are copied.
-
-###### `"reference"`
-
-Never copy keys. Changes made will affect the source.
 
 ###### `"on-write"`
 
@@ -157,11 +153,16 @@ used.
 
 ```ts
 import { CompositeMap3 } from "composite-map";
-const map = new CompositeMap3<string, number, boolean>();
+const map = new CompositeMap3<string, number, boolean, string>();
 map.set(["one", 2, true], "test-value");
 const value: string = map.get(["one", 2, true]);
 const subMap: Map<boolean, string> = map.get(["one", 2]);
 ```
+
+## Related
+
+-   [composite-object](https://github.com/WesVanVugt/composite-object) - A module for mapping between multi-part string keys and values.
+-   [json-key-map](https://github.com/WesVanVugt/json-key-map) - A module for mapping between JSON keys and values.
 
 ## License
 

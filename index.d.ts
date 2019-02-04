@@ -2,11 +2,10 @@ export interface RecursiveMap<K, V> extends Map<K, RecursiveMap<K, V> | V> {
 }
 export interface RecursiveEntries<K, V> extends Array<[K, RecursiveEntries<K, V> | V]> {
 }
-export declare type CompositeMapCopyMethod = "reference" | "on-write" | "keys";
+export declare type CompositeMapCopyMethod = "on-write" | "keys";
 export interface CompositeMapOptions {
     /**
      * Indicates when CompositeMap key data passed to the constructor is copied.
-     * * "reference": Never copy key data, referencing the original data instead. The most performant option.
      * * "on-write": Copy the data as necessary when changes are made. Incurs a performance pentalty, but preserves
      * the original data.
      * * "keys": Copy the key data. More performant than "on-write" when there are few entries, but less performant

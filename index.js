@@ -18,14 +18,7 @@ class CompositeMap {
                     break;
                 case "on-write":
                     // When using copy-on-write, map being copied must also use copy-on-write mode
-                    if (entries.copiedSet) {
-                        entries.copiedSet.clear();
-                    }
-                    else {
-                        entries.copiedSet = new Set();
-                    }
-                    this.copiedSet = new Set();
-                case "reference":
+                    this.copiedSet = entries.copiedSet = new WeakSet();
                     this.keyLength = entries.keyLength;
                     this.data = entries.data;
                     break;
@@ -82,15 +75,23 @@ class CompositeMap {
         return this;
     }
     clear() {
-        this.data.clear();
+        if (this.copiedSet && !this.copiedSet.has(this.data)) {
+            this.copiedSet = undefined;
+            this.data = new Map();
+        }
+        else {
+            this.data.clear();
+        }
         this.keyLength = 0;
     }
     delete(key) {
         if (!this.keyLength) {
+            this.copiedSet = undefined;
             return false;
         }
         if (!key.length) {
             if (!this.data.size) {
+                this.copiedSet = undefined;
                 return false;
             }
             this.clear();
@@ -120,9 +121,6 @@ class CompositeMap {
                 // Every map has been checked that the corresponding key is present, so if there is only one
                 // element, it must belong to the key we are removing.
                 break;
-            }
-            if (this.copiedSet) {
-                this.copiedSet.delete(map2);
             }
         }
         return this.copySection(maps, key, deletePoint).delete(key[deletePoint]);
